@@ -1,16 +1,17 @@
 [
-{
-  "modid": "lcm-regen",
-  "name": "Regeneration",
-  "description": "Mod that adds regeneration to Minecraft",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
-  "url": "",
-  "updateUrl": "",
-  "authorList": ["Grayson, Sub, HoldYourWaffle"],
-  "credits": "Lucraft, for the core, SmokedOak for the idea, Sheriff for item textures",
-  "logoFile": "",
-  "screenshots": [],
-  "dependencies": []
-}
+  {
+    "modid": "regeneration",
+    "name": "Regeneration",
+    "description": "The mod that brings a Doctor Who regeneration experience to Minecraft!",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://minecraft.curseforge.com/projects/regeneration",
+    "authorList": [
+      "Suffril, Lucraft, Nictogen, HoldYourWaffle"
+    ],
+    "credits": "",
+    "logoFile": "/assets/regeneration/logo.png",
+    "screenshots": [],
+    "dependencies": []
+  }
 ]

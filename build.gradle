@@ -1,63 +1,115 @@
+
+
 buildscript {
-    repositories {
-        jcenter()
-        maven { url = "http://files.minecraftforge.net/maven" }
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-    }
+	repositories {
+		jcenter()
+		maven { url = 'http://files.minecraftforge.net/maven' }
+	}
+
+	dependencies {
+		classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+	}
 }
+
+plugins {
+	id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-def getGitHash = { ->
-	def stdout = new ByteArrayOutputStream()
-	exec {
-		commandLine 'git', 'rev-parse', '--short', 'HEAD'
-		standardOutput = stdout
-	}
-	return stdout.toString().trim()
-}
+//TODO add classifier for builds not on the master branch
+version = project.mod_version
+group = project.maven_group
+archivesBaseName = "${project.jar_name}-${minecraft_version}"
 
-version = "2.0"+"-SNAPSHOT_"+getGitHash()
-group = "com.lcm.regeneration"
-archivesBaseName = "lcm-regen"
-
-sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+sourceCompatibility = targetCompatibility = 1.8
 
 minecraft {
-    version = "1.12.2-14.23.1.2589"
-    runDir = "run"
-    mappings = "snapshot_20180101"
+	version = "${project.minecraft_version}-${project.forge_version}"
+	mappings = project.mappings_version
+	makeObfSourceJar = true
+
+	if(project.hasProperty('runDir'))
+		runDir = project.runDir
+	else if(file('../run').exists())
+		runDir = '../run'
+	else
+		runDir = 'run'
 }
 
 repositories {
-	maven { url "https://jitpack.io" }
-}
+	maven {
+		name = "IC2"
+		url = "http://maven.ic2.player.to"
+	}
 
-dependencies {
-	deobfCompile ('org.bitbucket.Lucraft:lucraftcore:2.0.5') {
-		exclude group: 'slimeknights.mantle'
-		exclude group: 'slimeknights'
-		exclude group: 'cofh'
-		exclude group: 'mezz.jei'
+	maven {
+		name = "CurseForge"
+		url = "https://minecraft.curseforge.com/api/maven"
+	}
+
+	maven {
+		name = "JitPack"
+		url = "https://jitpack.io"
+	}
+
+	maven {
+		name = "Progwml6 maven"
+		url = "http://dvs1.progwml6.com/files/maven"
 	}
 }
 
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else except the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
+configurations {
+	testServer.extendsFrom runtime
 }
+
+dependencies {
+	deobfCompile 'com.github.Spectre0987:TardisMod:0.0.9c'
+	deobfCompile 'com.gitlab.lcoremodders:LucraftCore:3fe48363d9'
+
+	testCompile 'junit:junit:4.12'
+	testCompile 'org.objenesis:objenesis:3.0.1'
+	testCompile 'org.mockito:mockito-core:2.23.4'
+
+	testServer 'com.github.HoldYourWaffle:CrashMyServer:-SNAPSHOT'
+	compile 'org.jsoup:jsoup:1.11.3'
+}
+
+processResources {
+	inputs.property 'version', project.version
+	inputs.property 'mcversion', project.minecraft.version
+
+	from(sourceSets.main.resources.srcDirs) {
+		include 'mcmod.info'
+		expand 'version':project.version, 'mcversion':project.minecraft.version
+	}
+
+	from(sourceSets.main.resources.srcDirs) {
+		exclude 'mcmod.info'
+	}
+}
+
+def core_plugin = "me.swirtzly.regeneration.asm.RegenerationPlugin"
+
+jar {
+	manifest {
+		attributes "FMLCorePlugin": core_plugin
+		attributes "FMLCorePluginContainsFMLMod": "true"
+		attributes 'FMLAT': 'regeneration_at.cfg'
+	}
+}
+
+shadowJar {
+	dependencies {
+		include(dependency('org.jsoup:.*'))
+	}
+
+	relocate 'org.jsoup', 'me.swirtzly.regeneration.util.jsoup'
+
+	classifier '' // Replace the default JAR
+}
+
+reobf {
+	shadowJar {} // Reobfuscate the shadowed JAR
+}
+
